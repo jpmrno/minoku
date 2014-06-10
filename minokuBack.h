@@ -8,7 +8,8 @@ enum comandos {FLAG = 1, UNFLAG, QUERY, S, SAVE, UNDO, QUIT};
 #define TRUE 1
 #define FALSE 0
 
-// Errores //
+// Errores // 
+// Aclaración: Es más claro de esta manera que un enum
 #define OK 1
 #define ERROR 0
 #define ERROR_MALLOC -1
@@ -64,8 +65,8 @@ enum comandos {FLAG = 1, UNFLAG, QUERY, S, SAVE, UNDO, QUIT};
 
 //// ESTRUCTURAS Y SINONIMOS A TIPOS DE DATO ////
 
-typedef char *tFila;
-typedef tFila *tTablero;
+typedef char * tFila;
+typedef tFila * tTablero;
 
 typedef char tArchivo[MAX_FILE_NAME];
 
@@ -118,11 +119,12 @@ int guardarDatos(const tTablero incognita, const tTablero tablero, int filas, in
 int cargarDatos(tTablero * incognita, tTablero * tablero, int * filas, int * columnas, tParametros * p, tArchivo saveFile);
 // Genera el tablero para jugar y el incognita y a éste se le distribuyen minas, setea la dificultad
 int prepararJuego(tTablero *incognita, tTablero *tablero, int filas, int columnas, tParametros *parametros);
-// Se comparan los 2 tableros para saber cuantos flags colocados coinciden con las minas del incognita
+/* Se comparan los 2 tableros para saber cuantos flags colocados coinciden con las minas del incognita y los sweep
+** realizados correctamente */
 void analizarTablero(const tTablero incognita, const tTablero tablero, int filas, int columnas, tEstado * eJuego);
 // Valida el comando previamente ingresado por el usuario. Devuelve un entero que hace referencia al comando o un error correspondiente en caso contrario
-int validaCmd(const tTablero incognita, tTablero tablero, int filas, int columnas, tParametros * p, char * comando, tRunCmd * toRun);
-
+int validaCmd(const tTablero incognita, tTablero tablero, int filas, int columnas, tParametros * p, char * comando, tRunCmd * toRdaun);
+// Ejecuta el comando y retorna OK si se pudo ejecutar correctamente o el correspondiente error
 int ejecutaCmd(const tTablero incognita, tTablero tablero, int filas, int columnas, tParametros * p, tEstado * eJuego, tComando * lastCmd, tRunCmd * toRun);
 
 #endif

@@ -3,51 +3,51 @@
 #include <time.h>
 #include "getnum.h"
 #include "minokuBack.h"
-
-// Colores //
-#define CNRM  "\x1B[0m"
-#define CTRED  "\x1B[1;31m"
-#define CTGRN  "\x1B[1;32m"
-#define CTYEL  "\x1B[1;33m"
-#define CYEL  "\x1B[33m"
-#define CBLU  "\x1B[34m"
-#define CTBLU  "\x1B[1;34m"
-#define CTMAG  "\x1B[1;35m"
-#define CTGREY  "\x1B[1;30m"
-#define CTCYN  "\x1B[1;36m"
-#define CCYN  "\x1B[36m"
-#define CWHT  "\x1B[37m"
+#include "colores.h"
 
 #define BORRA_BUFFER while (getchar() != '\n')
 
 // Resultado del juego //
+
 enum resultado {PERDIO = 1, GANO, SIGUE};
 
 //// Declaraciones ////
 
+int menu(void);
 int juegoNuevo(void);
 void modoJuego(tParametros * parametros, int * filas, int * columnas);
 int jugarCampania(tTablero incognita, tTablero tablero, int filas, int columnas, tParametros *parametros, tEstado * eJuego, FILE * fp, int nivel);
 int cargarJuego(void);
 int jugar(const tTablero incognita, tTablero tablero, int filas, int columnas, tParametros * parametros, tEstado * eJuego);
 int seguirJuego(tParametros * parametros, int casilleros, tEstado * eJuego);
+// Pregunta si se desea guardar (si se desea entonces se guarda) y sale del juego
 void quit(const tTablero incognita, tTablero tablero, int filas, int columnas, tParametros * parametros);
 void setDimTableros(int * filas, int * columnas);
 int leerDificultad(int casilleros);
 int leerFileCamp(tParametros * parametros, FILE ** fp);
 void imprimirTablero(const tTablero tablero, int filas, int columnas);
+// Imprime con formato
 void printa(const char s[]);
 void printw(const char s[]);
+// Imprime el mensaje correspondiente al error que recibe
 void printError(int error);
 void title(void);
 
 int main(void) {
-	int opcion, ret;
-	char seguir;
+	int ret;
 
 	srand(time(NULL));
 
 	title();
+
+	ret = menu();
+
+	return !ret;
+}
+
+int menu(void) {
+	int opcion, ret;
+	char seguir;
 
 	do {
 		printf("\n1) Juego Nuevo\n2) Cargar Juego\n3) Salir\n");
@@ -73,7 +73,7 @@ int main(void) {
 	} 
 	while(seguir);
 
-	return !ret;
+	return ret;
 }
 
 int juegoNuevo(void) {
@@ -93,7 +93,7 @@ int juegoNuevo(void) {
 		if(!leerFileCamp(&parametros, &fp)) // Caso campania leo el nombre del archivo, si hay error (ver funcion) entonces ERROR
 			return ERROR;
 		ret = jugarCampania(incognita, tablero, filas, columnas, &parametros, &eJuego, fp, nivel);
-		if(ret < OK) { // Caso que falle el prepararJuego
+		if(ret < OK) { // Caso que falle el prepararJuego del jugarCampania
 			printError(ret);
 			return ERROR;
 		}
@@ -104,7 +104,7 @@ int juegoNuevo(void) {
 			return ERROR;
 		}
 		ret = jugar(incognita, tablero, filas, columnas, &parametros, &eJuego);
-		freeTablero(incognita, filas);
+		freeTablero(incognita, filas); // Libera los tableros viejos
 		freeTablero(tablero, filas);
 		if(ret < OK) {
 			printError(ret);
@@ -147,13 +147,16 @@ void modoJuego(tParametros * parametros, int * filas, int * columnas) {
 }
 
 int jugarCampania(tTablero incognita, tTablero tablero, int filas, int columnas, tParametros *parametros, tEstado * eJuego, FILE * fp, int nivel) {
-	int ret = GANO;
+	int ret = GANO, leidos;
+	char unChar;
 
-	while(!feof(fp) && ret == GANO) {
+	while(!feof(fp) && ret == GANO) { // Sigue jugando si se gano el nivel anterior y todavia no se termino el archivo
 		eJuego->flagsUsados = eJuego->flagsCorrectos = eJuego->sCorrectos = 0; 
 		eJuego->barrioMina = FALSE;
-		fscanf(fp, "%d\t%dx%d", &(parametros->nivel), &filas, &columnas);
-		ret = prepararJuego(&incognita, &tablero, filas, columnas, parametros);
+		leidos = fscanf(fp, "%d\t%dx%d%c", &(parametros->nivel), &filas, &columnas, &unChar); // Carga los datos del nivel de campania
+		if(leidos == 4 && unChar != '\n')
+			return ERROR_CORRUPT_FILE_CAMP;
+		ret = prepararJuego(&incognita, &tablero, filas, columnas, parametros); // Prepara los tableros y la dificultad
 		if(ret < OK) {
 			return ret;
 		}
@@ -162,8 +165,8 @@ int jugarCampania(tTablero incognita, tTablero tablero, int filas, int columnas,
 		printf("Nivel: %d\n", nivel++);
 		printf("Tablero de %dx%d: \n", filas, columnas);
 		printf("Dificultad: %d\n", parametros->nivel);
-		ret = jugar(incognita, tablero, filas, columnas, parametros, eJuego);
-		freeTablero(incognita, filas);
+		ret = jugar(incognita, tablero, filas, columnas, parametros, eJuego); // Juega
+		freeTablero(incognita, filas); // Libera los tableros viejos
 		freeTablero(tablero, filas);
 	}
 	fclose(fp);
@@ -191,7 +194,7 @@ int cargarJuego(void) {
 	do { // Lee el archivo guardado, en caso de error, imprime el mensaje correspondiente
 		error = FALSE;
 		printw("Introducir el nombre del archivo guardado (max. 20 caracteres)");
-		scanf("%20[0-9a-zA-Z -/]s", saveFile); //Lee hasta 20 caracteres y permite guardar nombres con espacios
+		scanf("%20[0-9a-zA-Z -/]s", saveFile); // Lee hasta 20 caracteres y permite guardar nombres con espacios
 		BORRA_BUFFER;
 		ret = cargarDatos(&incognita, &tablero, &filas, &columnas, &parametros, saveFile);
 		if(ret < OK) {
@@ -243,15 +246,15 @@ int jugar(const tTablero incognita, tTablero tablero, int filas, int columnas, t
 	char * comando;
 	tComando lastCmd;
 	tRunCmd toRun;
-	int ret, error, i;
+	int ret, error, i, winLose;
 
-	if(parametros->movimientos == INF)
+	if(parametros->movimientos == INF) // Caso infinitos movimientos
 		eJuego->infMoves = TRUE;
 
 	printw("Juego iniciado correctamente");
 
-	while(seguirJuego(parametros, filas*columnas, eJuego) == SIGUE) {
-		imprimirTablero(tablero, filas, columnas);
+	while((winLose = seguirJuego(parametros, filas*columnas, eJuego)) == SIGUE) { // Verifica si perdio o gano
+		imprimirTablero(tablero, filas, columnas); // Imprime el estado del tablero
 		printw("Te restan:");
 		printf("%d flags.\n%d undos.\n", parametros->minas - eJuego->flagsUsados, parametros->undos);
 		if(!eJuego->infMoves)
@@ -261,30 +264,29 @@ int jugar(const tTablero incognita, tTablero tablero, int filas, int columnas, t
 			error = FALSE;
 			ret = ERROR_CMD_NAME;
 			printf(CYEL"Ingrese un comando: "CNRM);
-			comando = leerString();
+			comando = leerString(); // Lee el comando
 			if(comando != NULL)
-				ret = validaCmd(incognita, tablero, filas, columnas, parametros, comando, &toRun);
+				ret = validaCmd(incognita, tablero, filas, columnas, parametros, comando, &toRun); // Lo verifica
 			if(ret < OK) {
 				printError(ret);
 				error = TRUE;
 			} else {
-				ret = ejecutaCmd(incognita, tablero, filas, columnas, parametros, eJuego, &lastCmd, &toRun);
+				ret = ejecutaCmd(incognita, tablero, filas, columnas, parametros, eJuego, &lastCmd, &toRun); // Lo ejecuta
 				if(ret < OK) {
 					printError(ret);
 					error = TRUE;
 				}
 			}
-		} while(error);
+		} while(error); // Si se verifico y ejecuto correctamente, entonces sigue
 
 		// Comandos que requieren printear algo:
 		if(ret == QUIT) {
 			quit(incognita, tablero, filas, columnas, parametros);
 			return OK;
 		}
-		if(ret == SAVE) {
+		if(ret == SAVE)
 			printw("Juego guardado con exito");
-		}
-		if(ret == QUERY) {
+		if(ret == QUERY) { // Imprime la sucesion de minas provista por el query()
 			printf(CCYN"\nSucesion de minas: "CNRM);
 			if(toRun.queryVec[0] == EOA)
 				printf("No hay minas");
@@ -304,11 +306,11 @@ int jugar(const tTablero incognita, tTablero tablero, int filas, int columnas, t
 				parametros->undos = 0;
 		}
 	}
-	imprimirTablero(incognita, filas, columnas);
-	return GANO;
+	imprimirTablero(incognita, filas, columnas); // Una vez que termina el juego imprime el tablero incognita
+	return winLose;
 }
 
-int seguirJuego(tParametros * parametros, int casilleros, tEstado * eJuego) { //Verifica estado actual del tablero
+int seguirJuego(tParametros * parametros, int casilleros, tEstado * eJuego) { // Verifica estado actual del tablero
 	if(eJuego->barrioMina && parametros->undos == 0) {
 		printw("HAS PERDIDO");
 		return PERDIO;
@@ -456,6 +458,17 @@ void printError(int error) { //Imprime los diferentes mensajes de error
 			break;
 		case ERROR_OPEN_FILE:
 			printa("El archivo no existe");
+			printf(" _    _     ___     _    _        _       _\n");
+			printf("|:|  |:|   /:::\\   |:|  |:|      |_ | |  |_\n");
+			printf("|:|  |:|  /:/'\\:\\  |:|  |:|      |  | |_ |_\n");
+			printf("|:|__|:| |:|   |:| |:|__|:|           _  ___\n");
+			printf("|::::::| |:|   |:| |::::::|     |\\ | / \\  |\n");
+			printf("'\"\"\"\"|:| |:|   |:| '\"\"\"\"|:|     | \\| \\_/  |\n");
+			printf("     |:| |:|   |:|      |:|   _  _            _\n");
+			printf("     |:| |:\\   |:|      |:|  |_ / \\ | | |\\ | | \\\n");
+			printf("     |:|  \\:\\_/:/       |:|  |  \\_/ \\_/ | \\| |_/\n");
+			printf("     |:|   \\:::/        |:|\n");
+			printf("     '\"'    '\"'         '\"'\n\n");
 			break;
 		case ERROR_OPEN_FILE_CAMP:	
 			printa("El archivo campania no existe");
@@ -504,5 +517,5 @@ void title(void) {
 	printf(CTGRN"|       ||   | |  _    ||  |_|  ||     |_ |       |\n");
 	printf(CTRED"| ||_|| ||   | | | |   ||       ||    _  ||       |\n");
 	printf(CTMAG"|_|   |_||___| |_|  |__||_______||___| |_||_______|\n"CNRM);
-	printf("\t\tby... Juan Moreno & Gonzalo Ibars\n");
+	printf(" by... Juan Moreno, Gonzalo Ibars & German Malnero\n");
 }

@@ -1,0 +1,35 @@
+ __   __  ___   __    _  _______  ___   _  __   __ 
+|  |_|  ||   | |  |  | ||       ||   | | ||  | |  |
+|       ||   | |   |_| ||   _   ||   |_| ||  | |  |
+|       ||   | |       ||  | |  ||      _||  |_|  |
+|       ||   | |  _    ||  |_|  ||     |_ |       |
+| ||_|| ||   | | | |   ||       ||    _  ||       |
+|_|   |_||___| |_|  |__||_______||___| |_||_______|
+
+                    _
+ _ __ ___  __ _  __| |  _ __ ___   ___ 
+| '__/ _ \/ _` |/ _` | | '_ ` _ \ / _ \
+| | |  __/ (_| | (_| | | | | | | |  __/
+|_|  \___|\__,_|\__,_| |_| |_| |_|\___|
+
+
+Integrantes:
+
+-> Juan Moreno
+-> Gonzalo Ibars
+-> German Malnero
+
+
+Instrucciones de uso del makefile (comando make):
+
+-> make: Preprocesa, compila y linkedita todos los archivos ".c"  de manera automática que se encuentran en la misma carpeta. 
+   En caso de que se agregaran archivos .h o .c, éstos se detectarán de forma automática también.
+
+-> make clean: Elimina los archivos objeto ".o" y el ejecutable final.
+
+-> make run: Corre el juego. Si no se encuentra, devuelve un error.
+
+-> make backup: Realiza una copia de seguridad sobre todos los archivos ".c" ".h" ".o" y el ejecutable que se encuentren en la carpeta. 
+   Se guardan en la carpeta backups con el nombre de día, día, mes, hora, minutos y segundos.
+
+Aclaración del Save File: el nivel se refiere a la dificultad del juego, no al nivel en la campaña.

@@ -7,25 +7,29 @@
 //// DECLARACIONES ////
 
 // Manejo de matrices //
-// Genera una matriz dinámica de n filas y m columnas
+
+// Genera una matriz dinámica de nro. filas por nro. columnas
 static tTablero generarTablero(int filas, int columnas);
-// Coloca en todas las posiciones el objeto indicado por parámetro
+// Coloca en todas las posiciones el objeto (obj) indicado por parámetro
 static void llenarTablero(tTablero tablero, int filas, int columnas, char obj);
 // En un juego nuevo, distribuye de manera pseudoaleatoria las minas en un tablero
 static void llenarMinas(tTablero tablero, int filas, int columnas, tParametros *parametros);
 
 // Validaciones de filas y columnas //
+
+// Verifica que el elemento este dentro del rango de filas y de columnas
+static int posValida(tElemento * elemento, int filas, int columnas);
 // Valida el rango de lo ingresado en comandos específicos. En caso de que se hayan pasado los valores al revés, se intercambian
 static int rangoValido(tElemento * inicial, tElemento * final, int filas, int columnas);
-// Comando auxiliar de rangoValido que verifica cada cota por separado
-static int posValida(tElemento * elemento, int filas, int columnas);
 
 // Generador de número pseudoaleatorio //
+
 // Distribuye de manera uniforme la generación de números pseudoaleatorio elegidos
 static double randNormalize(void);
 static int randInt(int izq, int der);
 
 // Comandos del juego //
+
 static int flag(const tTablero incognita, tTablero tablero, tElemento *elemento, tEstado * juego);
 static int unflag(const tTablero incognita, tTablero tablero, tElemento * elemento, tEstado * eJuego);
 static int barrerCasillero(const tTablero incognita, tTablero tablero, tElemento * elemento, tEstado * eJuego);
